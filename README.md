@@ -228,6 +228,13 @@ ECG-Pacemaker-Detection/
 - **Secondary:** Fβ (β=2), Gβ, Geometric Mean
 - **Per-class:** AUROC, AUPRC, Sensitivity, Specificity
 
+### Continuous Integration
+`.github/workflows/ci.yml` runs four mandatory jobs on every push and pull
+request: Ruff + Black, the `pytest` suite, a Docker build that must import
+`CTN`, and a security scan (`pip-audit` + TruffleHog). No step is masked with
+`continue-on-error` or `|| true`. See [`docs/CI.md`](docs/CI.md) for the exact
+commands, the Python 3.11 requirement and how to reproduce every gate locally.
+
 ---
 
 ## ⚠️ Known Limitations
