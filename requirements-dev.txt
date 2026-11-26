@@ -1,0 +1,4 @@
+# Development / CI dependencies. Kept separate from runtime requirements so the
+# runtime image stays lean.
+pytest>=8.0.0
+pytest-cov>=5.0.0

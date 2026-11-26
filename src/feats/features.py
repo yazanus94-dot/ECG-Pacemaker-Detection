@@ -18,7 +18,6 @@ from feats.template_statistics import *
 
 
 class Features:
-
     """
     Generate an array of ECG features.
 
@@ -35,7 +34,9 @@ class Features:
     """
 
     available_feature_groups = [
-        'full_waveform_statistics', 'heart_rate_variability_statistics', 'template_statistics'
+        "full_waveform_statistics",
+        "heart_rate_variability_statistics",
+        "template_statistics",
     ]
 
     def __init__(self, data, fs, feature_groups, labels=None):
@@ -54,10 +55,16 @@ class Features:
     def get_feature_groups(cls):
         return cls.available_feature_groups
 
-    def calculate_features(self, filter_bandwidth, show=False,
-                           channel=0, normalize=True, polarity_check=True,
-                           template_before=0.2, template_after=0.4):
-
+    def calculate_features(
+        self,
+        filter_bandwidth,
+        show=False,
+        channel=0,
+        normalize=True,
+        polarity_check=True,
+        template_before=0.2,
+        template_after=0.4,
+    ):
         """
         Get ECG feature DataFrame
 
@@ -89,14 +96,21 @@ class Features:
         signal_raw = self.data
 
         # Preprocess signal
-        ts, signal_raw, signal_filtered, rpeaks, templates_ts, templates = \
-            self._preprocess_signal(signal_raw, filter_bandwidth, normalize,
-                                    polarity_check, template_before, template_after)
+        ts, signal_raw, signal_filtered, rpeaks, templates_ts, templates = (
+            self._preprocess_signal(
+                signal_raw,
+                filter_bandwidth,
+                normalize,
+                polarity_check,
+                template_before,
+                template_after,
+            )
+        )
 
         # Get features
         self.features = self.features._append(
             self._group_features(
-                file_name='',
+                file_name="",
                 ts=ts,
                 signal_raw=signal_raw,
                 signal_filtered=signal_filtered,
@@ -104,13 +118,20 @@ class Features:
                 templates_ts=templates_ts,
                 templates=templates,
                 template_before=template_before,
-                template_after=template_after
+                template_after=template_after,
             ),
-            ignore_index=True
+            ignore_index=True,
         )
 
-    def _preprocess_signal(self, signal_raw, filter_bandwidth, normalize,
-                           polarity_check, template_before, template_after):
+    def _preprocess_signal(
+        self,
+        signal_raw,
+        filter_bandwidth,
+        normalize,
+        polarity_check,
+        template_before,
+        template_after,
+    ):
 
         # Filter signal
         signal_filtered = self._apply_filter(signal_raw, filter_bandwidth)
@@ -119,12 +140,16 @@ class Features:
         ecg_object = ecg.ecg(signal=signal_raw, sampling_rate=self.fs, show=False)
 
         # Get BioSPPy output
-        ts = ecg_object['ts']                        # Signal time array
-        rpeaks = ecg_object['rpeaks']                # rpeak indices
+        ts = ecg_object["ts"]  # Signal time array
+        rpeaks = ecg_object["rpeaks"]  # rpeak indices
 
         # Get templates and template time array
-        templates, rpeaks = self._extract_templates(signal_filtered, rpeaks, template_before, template_after)
-        templates_ts = np.linspace(-template_before, template_after, templates.shape[1], endpoint=False)
+        templates, rpeaks = self._extract_templates(
+            signal_filtered, rpeaks, template_before, template_after
+        )
+        templates_ts = np.linspace(
+            -template_before, template_after, templates.shape[1], endpoint=False
+        )
 
         # Polarity check
         if polarity_check:
@@ -201,18 +226,29 @@ class Features:
         order = int(0.3 * self.fs)
 
         # Filter signal
-        signal, _, _ = filter_signal(signal=signal,
-                                     ftype='FIR',
-                                     band='bandpass',
-                                     order=order,
-                                     frequency=filter_bandwidth,
-                                     sampling_rate=self.fs)
+        signal, _, _ = filter_signal(
+            signal=signal,
+            ftype="FIR",
+            band="bandpass",
+            order=order,
+            frequency=filter_bandwidth,
+            sampling_rate=self.fs,
+        )
 
         return signal
 
-    def _group_features(self, file_name, ts, signal_raw, signal_filtered, rpeaks,
-                        templates_ts, templates, template_before, template_after):
-
+    def _group_features(
+        self,
+        file_name,
+        ts,
+        signal_raw,
+        signal_filtered,
+        rpeaks,
+        templates_ts,
+        templates,
+        template_before,
+        template_after,
+    ):
         """
         Get a dictionary of all ECG features
         """
@@ -221,7 +257,7 @@ class Features:
         features = dict()
 
         # Set ECG file name
-        features['file_name'] = file_name
+        features["file_name"] = file_name
 
         # Loop through feature groups
         for feature_group in self.feature_groups:
@@ -229,7 +265,7 @@ class Features:
             ##########################
             # Full Waveform Statistics
             ##########################
-            if feature_group == 'full_waveform_statistics':
+            if feature_group == "full_waveform_statistics":
 
                 # Get features
                 full_waveform_statistics = FullWaveformStatistics(
@@ -241,7 +277,7 @@ class Features:
                     templates=templates,
                     fs=self.fs,
                     template_before=template_before,
-                    template_after=template_after
+                    template_after=template_after,
                 )
                 full_waveform_statistics.calculate_full_waveform_statistics()
 
@@ -251,7 +287,7 @@ class Features:
             ###################
             # Heart Rate Variability Statistics
             ###################
-            if feature_group == 'heart_rate_variability_statistics':
+            if feature_group == "heart_rate_variability_statistics":
 
                 # Get features
                 heart_rate_variability_statistics = HeartRateVariabilityStatistics(
@@ -263,17 +299,19 @@ class Features:
                     templates=templates,
                     fs=self.fs,
                     template_before=template_before,
-                    template_after=template_after
+                    template_after=template_after,
                 )
                 heart_rate_variability_statistics.calculate_heart_rate_variability_statistics()
 
                 # Update feature dictionary
-                features.update(heart_rate_variability_statistics.get_heart_rate_variability_statistics())
+                features.update(
+                    heart_rate_variability_statistics.get_heart_rate_variability_statistics()
+                )
 
             #####################
             # Template Statistics
             #####################
-            if feature_group == 'template_statistics':
+            if feature_group == "template_statistics":
 
                 # Get features
                 template_statistics = TemplateStatistics(
@@ -285,7 +323,7 @@ class Features:
                     templates=templates,
                     fs=self.fs,
                     template_before=template_before,
-                    template_after=template_after
+                    template_after=template_after,
                 )
                 template_statistics.calculate_template_statistics()
 

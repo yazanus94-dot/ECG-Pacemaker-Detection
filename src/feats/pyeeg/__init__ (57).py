@@ -31,14 +31,15 @@ Functions listed alphabetically
 --------------------------------------------------
 
 """
+
 from __future__ import print_function
 import numpy
 
-
 # ####################### Begin function definitions #######################
 
+
 def hurst(X):
-    """ Compute the Hurst exponent of X. If the output H=0.5,the behavior
+    """Compute the Hurst exponent of X. If the output H=0.5,the behavior
     of the time-series is similar to random walk. If H<0.5, the time-series
     cover less "distance" than a random walk, vice verse.
 
@@ -83,9 +84,9 @@ def hurst(X):
     R_T = numpy.zeros(N)
 
     for i in range(N):
-        S_T[i] = numpy.std(X[:i + 1])
+        S_T[i] = numpy.std(X[: i + 1])
         X_T = Y - T * Ave_T[i]
-        R_T[i] = numpy.ptp(X_T[:i + 1])
+        R_T[i] = numpy.ptp(X_T[: i + 1])
 
     R_S = R_T / S_T
     R_S = numpy.log(R_S)[1:]
@@ -218,9 +219,7 @@ def bin_power(X, Band, Fs):
         Freq = float(Band[Freq_Index])
         Next_Freq = float(Band[Freq_Index + 1])
         Power[Freq_Index] = sum(
-            C[numpy.floor(
-                Freq / Fs * len(X)
-            ): numpy.floor(Next_Freq / Fs * len(X))]
+            C[numpy.floor(Freq / Fs * len(X)) : numpy.floor(Next_Freq / Fs * len(X))]
         )
     Power_Ratio = Power / sum(Power)
     return Power, Power_Ratio
@@ -247,14 +246,12 @@ def pfd(X, D=None):
         if D[i] * D[i - 1] < 0:
             N_delta += 1
     n = len(X)
-    return numpy.log10(n) / (
-        numpy.log10(n) + numpy.log10(n / n + 0.4 * N_delta)
-    )
+    return numpy.log10(n) / (numpy.log10(n) + numpy.log10(n / n + 0.4 * N_delta))
 
 
 def hfd(X, Kmax):
-    """ Compute Hjorth Fractal Dimension of a time series X, kmax
-     is an HFD parameter
+    """Compute Hjorth Fractal Dimension of a time series X, kmax
+    is an HFD parameter
     """
     L = []
     x = []
@@ -270,12 +267,12 @@ def hfd(X, Kmax):
         L.append(numpy.log(numpy.mean(Lk)))
         x.append([numpy.log(float(1) / k), 1])
 
-    (p, r1, r2, s) = numpy.linalg.lstsq(x, L)
+    p, r1, r2, s = numpy.linalg.lstsq(x, L)
     return p[0]
 
 
 def hjorth(X, D=None):
-    """ Compute Hjorth mobility and complexity of a time series from either two
+    """Compute Hjorth mobility and complexity of a time series from either two
     cases below:
         1. X, the time series of type list (default)
         2. D, a first order differential sequence of X (if D is provided,
@@ -320,7 +317,7 @@ def hjorth(X, D=None):
 
     n = len(X)
 
-    M2 = float(sum(D ** 2)) / n
+    M2 = float(sum(D**2)) / n
     TP = sum(numpy.array(X) ** 2)
     M4 = 0
     for i in range(1, len(D)):
@@ -517,17 +514,17 @@ def ap_entropy(X, M, R):
     Em = embed_seq(X, 1, M)
     A = numpy.tile(Em, (len(Em), 1, 1))
     B = numpy.transpose(A, [1, 0, 2])
-    D = numpy.abs(A - B) #  D[i,j,k] = |Em[i][k] - Em[j][k]|
+    D = numpy.abs(A - B)  #  D[i,j,k] = |Em[i][k] - Em[j][k]|
     InRange = numpy.max(D, axis=2) <= R
-    Cm = InRange.mean(axis=0) #  Probability that random M-sequences are in range
+    Cm = InRange.mean(axis=0)  #  Probability that random M-sequences are in range
 
     # M+1-sequences in range iff M-sequences are in range & last values are close
     Dp = numpy.abs(numpy.tile(X[M:], (N - M, 1)) - numpy.tile(X[M:], (N - M, 1)).T)
     Cmp = numpy.logical_and(Dp <= R, InRange[:-1, :-1]).mean(axis=0)
 
     # Uncomment for old (miscounted) version
-    #Cm += 1 / (N - M +1); Cm[-1] -= 1 / (N - M + 1)
-    #Cmp += 1 / (N - M)
+    # Cm += 1 / (N - M +1); Cm[-1] -= 1 / (N - M + 1)
+    # Cmp += 1 / (N - M)
 
     Phi_m, Phi_mp = numpy.sum(numpy.log(Cm)), numpy.sum(numpy.log(Cmp))
 
@@ -582,20 +579,20 @@ def samp_entropy(X, M, R):
     Em = embed_seq(X, 1, M)
     A = numpy.tile(Em, (len(Em), 1, 1))
     B = numpy.transpose(A, [1, 0, 2])
-    D = numpy.abs(A - B) #  D[i,j,k] = |Em[i][k] - Em[j][k]|
+    D = numpy.abs(A - B)  #  D[i,j,k] = |Em[i][k] - Em[j][k]|
     InRange = numpy.max(D, axis=2) <= R
-    numpy.fill_diagonal(InRange, 0) #  Don't count self-matches
+    numpy.fill_diagonal(InRange, 0)  #  Don't count self-matches
 
-    Cm = InRange.sum(axis=0) #  Probability that random M-sequences are in range
+    Cm = InRange.sum(axis=0)  #  Probability that random M-sequences are in range
     Dp = numpy.abs(numpy.tile(X[M:], (N - M, 1)) - numpy.tile(X[M:], (N - M, 1)).T)
-    Cmp = numpy.logical_and(Dp <= R, InRange[:-1,:-1]).sum(axis=0)
+    Cmp = numpy.logical_and(Dp <= R, InRange[:-1, :-1]).sum(axis=0)
     # Uncomment below for old (miscounted) version
-    #InRange[numpy.triu_indices(len(InRange))] = 0
-    #InRange = InRange[:-1,:-2]
-    #Cm = InRange.sum(axis=0) #  Probability that random M-sequences are in range
-    #Dp = numpy.abs(numpy.tile(X[M:], (N - M, 1)) - numpy.tile(X[M:], (N - M, 1)).T)
-    #Dp = Dp[:,:-1]
-    #Cmp = numpy.logical_and(Dp <= R, InRange).sum(axis=0)
+    # InRange[numpy.triu_indices(len(InRange))] = 0
+    # InRange = InRange[:-1,:-2]
+    # Cm = InRange.sum(axis=0) #  Probability that random M-sequences are in range
+    # Dp = numpy.abs(numpy.tile(X[M:], (N - M, 1)) - numpy.tile(X[M:], (N - M, 1)).T)
+    # Dp = Dp[:,:-1]
+    # Cmp = numpy.logical_and(Dp <= R, InRange).sum(axis=0)
 
     # Avoid taking log(0)
     Samp_En = numpy.log(numpy.sum(Cm + 1e-100) / numpy.sum(Cmp + 1e-100))
@@ -702,14 +699,14 @@ def dfa(X, Ave=None, L=None):
     Y -= Ave
 
     if L is None:
-        L = numpy.floor(len(X) * 1 / (
-            2 ** numpy.array(list(range(4, int(numpy.log2(len(X))) - 4))))
+        L = numpy.floor(
+            len(X) * 1 / (2 ** numpy.array(list(range(4, int(numpy.log2(len(X))) - 4))))
         )
 
     F = numpy.zeros(len(L))  # F(n) of different given box length n
 
     for i in range(0, len(L)):
-        n = int(L[i])                        # for each box length L[i]
+        n = int(L[i])  # for each box length L[i]
         if n == 0:
             print("time series is too short while the box length is too big")
             print("abort")
@@ -720,15 +717,15 @@ def dfa(X, Ave=None, L=None):
                 # coordinates of time in the box
                 c = numpy.vstack([c, numpy.ones(n)]).T
                 # the value of data in the box
-                y = Y[j:j + n]
+                y = Y[j : j + n]
                 # add residue in this box
                 F[i] += numpy.linalg.lstsq(c, y)[1]
-        F[i] /= ((len(X) / n) * n)
+        F[i] /= (len(X) / n) * n
     F = numpy.sqrt(F)
 
-    Alpha = numpy.linalg.lstsq(numpy.vstack(
-        [numpy.log(L), numpy.ones(len(L))]
-    ).T, numpy.log(F))[0][0]
+    Alpha = numpy.linalg.lstsq(
+        numpy.vstack([numpy.log(L), numpy.ones(len(L))]).T, numpy.log(F)
+    )[0][0]
 
     return Alpha
 
@@ -914,13 +911,13 @@ def information_based_similarity(x, y, n):
     Space = [[0, 0], [0, 1], [1, 0], [1, 1]]
     Sample = [0, 1]
 
-    if (n == 1):
+    if n == 1:
         Wordlist = Sample
 
-    if (n == 2):
+    if n == 2:
         Wordlist = Space
 
-    elif (n > 1):
+    elif n > 1:
         Wordlist = Space
         Buff = []
         for k in range(0, n - 2):
@@ -946,7 +943,7 @@ def information_based_similarity(x, y, n):
     for i in range(0, 2):
         Encoder = numpy.diff(Input[i])
         for j in range(0, len(Input[i]) - 1):
-            if(Encoder[j] > 0):
+            if Encoder[j] > 0:
                 SymbolicSeq[i].append(1)
             else:
                 SymbolicSeq[i].append(0)
@@ -971,7 +968,7 @@ def information_based_similarity(x, y, n):
     Entropy = [[], []]
     for i in range(0, 2):
         for k in range(0, len(Wordlist)):
-            if (Prob[i][k] == 0):
+            if Prob[i][k] == 0:
                 Entropy[i].append(0)
             else:
                 Entropy[i].append(Prob[i][k] * (numpy.log2(Prob[i][k])))
@@ -991,7 +988,7 @@ def information_based_similarity(x, y, n):
     Z = 0
     n = 0
     for k in range(0, len(Wordlist)):
-        if ((Buff[0][k] != 0) & (Buff[1][k] != 0)):
+        if (Buff[0][k] != 0) & (Buff[1][k] != 0):
             F = -Entropy[0][k] - Entropy[1][k]
             IBS += numpy.multiply(numpy.absolute(Rank[0][k] - Rank[1][k]), F)
             Z += F
@@ -1079,27 +1076,27 @@ def LLE(x, tau, n, T, fs):
     M = len(Em)
     A = numpy.tile(Em, (len(Em), 1, 1))
     B = numpy.transpose(A, [1, 0, 2])
-    square_dists = (A - B) ** 2 #  square_dists[i,j,k] = (Em[i][k]-Em[j][k])^2
-    D = numpy.sqrt(square_dists[:,:,:].sum(axis=2)) #  D[i,j] = ||Em[i]-Em[j]||_2
+    square_dists = (A - B) ** 2  #  square_dists[i,j,k] = (Em[i][k]-Em[j][k])^2
+    D = numpy.sqrt(square_dists[:, :, :].sum(axis=2))  #  D[i,j] = ||Em[i]-Em[j]||_2
 
     # Exclude elements within T of the diagonal
-    band = numpy.tri(D.shape[0], k=T) - numpy.tri(D.shape[0], k=-T-1)
+    band = numpy.tri(D.shape[0], k=T) - numpy.tri(D.shape[0], k=-T - 1)
     band[band == 1] = numpy.inf
-    neighbors = (D + band).argmin(axis=0) #  nearest neighbors more than T steps away
+    neighbors = (D + band).argmin(axis=0)  #  nearest neighbors more than T steps away
 
     # in_bounds[i,j] = (i+j <= M-1 and i+neighbors[j] <= M-1)
     inc = numpy.tile(numpy.arange(M), (M, 1))
-    row_inds = (numpy.tile(numpy.arange(M), (M, 1)).T + inc)
-    col_inds = (numpy.tile(neighbors, (M, 1)) + inc.T)
+    row_inds = numpy.tile(numpy.arange(M), (M, 1)).T + inc
+    col_inds = numpy.tile(neighbors, (M, 1)) + inc.T
     in_bounds = numpy.logical_and(row_inds <= M - 1, col_inds <= M - 1)
     # Uncomment for old (miscounted) version
-    #in_bounds = numpy.logical_and(row_inds < M - 1, col_inds < M - 1)
+    # in_bounds = numpy.logical_and(row_inds < M - 1, col_inds < M - 1)
     row_inds[-in_bounds] = 0
     col_inds[-in_bounds] = 0
 
     # neighbor_dists[i,j] = ||Em[i+j]-Em[i+neighbors[j]]||_2
     neighbor_dists = numpy.ma.MaskedArray(D[row_inds, col_inds], -in_bounds)
-    J = (-neighbor_dists.mask).sum(axis=1) #  number of in-bounds indices by row
+    J = (-neighbor_dists.mask).sum(axis=1)  #  number of in-bounds indices by row
     # Set invalid (zero) values to 1; log(1) = 0 so sum is unchanged
     neighbor_dists[neighbor_dists == 0] = 1
     d_ij = numpy.sum(numpy.log(neighbor_dists.data), axis=1)

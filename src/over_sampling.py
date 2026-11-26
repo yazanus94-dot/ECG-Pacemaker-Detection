@@ -9,8 +9,8 @@ def overSampling(df):
     # df = pd.read_csv('new_record_2000.csv')
     print("1")
     # Separate features and target
-    X = df.drop(columns=['10370003'])
-    y = df['10370003']
+    X = df.drop(columns=["10370003"])
+    y = df["10370003"]
     print("2")
     # Apply RandomOverSampler
     ros = RandomOverSampler(random_state=42)
@@ -19,13 +19,8 @@ def overSampling(df):
     print("4")
     # Create a new DataFrame with resampled data
     df_resampled = pd.DataFrame(X_resampled, columns=X.columns)
-    df_resampled['10370003'] = y_resampled
+    df_resampled["10370003"] = y_resampled
 
-    df_resampled.to_csv("train_over_sampling.csv",index=False)
-    print(sum(df_resampled['10370003']==1))
+    df_resampled.to_csv("train_over_sampling.csv", index=False)
+    print(sum(df_resampled["10370003"] == 1))
     return df_resampled
-    
-
-
-
-

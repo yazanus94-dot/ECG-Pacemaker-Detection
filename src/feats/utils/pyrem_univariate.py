@@ -8,7 +8,7 @@ some functions will give different results compared to PyEEG as the maths have b
 Have a look at the documentation notes/ source code to know more.
 """
 
-__author__ = 'quentin'
+__author__ = "quentin"
 import numpy as np
 
 
@@ -27,30 +27,29 @@ def _embed_seq(X, tau, de):
     Y = np.zeros((de, N - (de - 1) * tau))
 
     for i in range(de):
-        Y[i] = X[i *tau : i*tau + Y.shape[1] ]
+        Y[i] = X[i * tau : i * tau + Y.shape[1]]
 
     return Y.T
 
 
 def _make_cmp(X, M, R, in_range_i, in_range_j):
 
-    #Then we make Cmp
+    # Then we make Cmp
     N = len(X)
 
     Emp = _embed_seq(X, 1, M + 1)
-    inrange_cmp = np.abs(Emp[in_range_i,-1] - Emp[in_range_j,-1]) <= R
+    inrange_cmp = np.abs(Emp[in_range_i, -1] - Emp[in_range_j, -1]) <= R
 
     in_range_cmp_i = in_range_i[inrange_cmp]
 
-    Cmp = np.bincount(in_range_cmp_i, minlength=N-M)
+    Cmp = np.bincount(in_range_cmp_i, minlength=N - M)
     in_range_cmp_j = in_range_j[inrange_cmp]
-    Cmp += np.bincount(in_range_cmp_j, minlength=N-M)
+    Cmp += np.bincount(in_range_cmp_j, minlength=N - M)
 
     return Cmp.astype(np.float)
 
 
 def _coarse_grainning(a, tau):
-
     """
     Coarse grainning for multiscale (sample) entropy.
     """
@@ -60,7 +59,7 @@ def _coarse_grainning(a, tau):
     length_out = a.size / tau
 
     n_dropped = a.size % tau
-    mat = a[0:a.size - n_dropped].reshape((tau, length_out))
+    mat = a[0 : a.size - n_dropped].reshape((tau, length_out))
     return np.mean(mat, axis=0)
 
 
@@ -80,10 +79,10 @@ def _make_cm(X, M, R):
     in_range_i = i_idx[inrange_cm]
     in_range_j = j_idx[inrange_cm]
 
-    Cm = np.bincount(in_range_i, minlength=N-M+1)
-    Cm += np.bincount(in_range_j, minlength=N-M+1)
+    Cm = np.bincount(in_range_i, minlength=N - M + 1)
+    Cm += np.bincount(in_range_j, minlength=N - M + 1)
 
-    inrange_last = np.max(np.abs(Em[:-1] - Em[-1]),1) <= R
+    inrange_last = np.max(np.abs(Em[:-1] - Em[-1]), 1) <= R
     Cm[inrange_last] += 1
     # all matches + self match
     Cm[-1] += np.sum(inrange_last) + 1
@@ -92,7 +91,6 @@ def _make_cm(X, M, R):
 
 
 def pfd(a):
-
     """
     Compute Petrosian Fractal Dimension of a time series [PET95]_.
     It is defined by:
@@ -121,11 +119,10 @@ def pfd(a):
     N_delta = np.sum(prod < 0)
     n = len(a)
 
-    return np.log(n)/(np.log(n)+np.log(n/(n+0.4*N_delta)))
+    return np.log(n) / (np.log(n) + np.log(n / (n + 0.4 * N_delta)))
 
 
 def hjorth(a):
-
     """
     Compute Hjorth parameters [HJO70]_.
     .. math::
@@ -155,8 +152,8 @@ def hjorth(a):
     second_deriv = np.diff(a, 2)
 
     var_zero = np.mean(a**2)
-    var_d1 = np.mean(first_deriv ** 2)
-    var_d2 = np.mean(second_deriv ** 2)
+    var_d1 = np.mean(first_deriv**2)
+    var_d2 = np.mean(second_deriv**2)
 
     activity = var_zero
     morbidity = np.sqrt(var_d1 / var_zero)
@@ -166,7 +163,6 @@ def hjorth(a):
 
 
 def svd_entropy(a, tau, de):
-
     """
     Compute the Singular Value Decomposition entropy of a signal with embedding dimension "de" and delay "tau" [PYEEG]_.
     .. note::
@@ -189,14 +185,13 @@ def svd_entropy(a, tau, de):
         return np.nan
 
     mat = _embed_seq(a, tau, de)
-    W = np.linalg.svd(mat, compute_uv = False)
-    W /= sum(W) # normalize singular values
+    W = np.linalg.svd(mat, compute_uv=False)
+    W /= sum(W)  # normalize singular values
 
-    return -1*sum(W * np.log2(W))
+    return -1 * sum(W * np.log2(W))
 
 
 def fisher_info(a, tau, de):
-
     """
     Compute the Fisher information of a signal with embedding dimension "de" and delay "tau" [PYEEG]_.
     Vectorised (i.e. faster) version of the eponymous PyEEG function.
@@ -214,15 +209,14 @@ def fisher_info(a, tau, de):
         return np.nan
 
     mat = _embed_seq(a, tau, de)
-    W = np.linalg.svd(mat, compute_uv = False)
+    W = np.linalg.svd(mat, compute_uv=False)
     W /= sum(W)  # normalize singular values
-    FI_v = (W[1:] - W[:-1])**2 / W[:-1]
+    FI_v = (W[1:] - W[:-1]) ** 2 / W[:-1]
 
     return np.sum(FI_v)
 
 
 def ap_entropy(a, m, R):
-
     """
     Compute the approximate entropy of a signal with embedding dimension "de" and delay "tau" [PYEEG]_.
     Vectorised version of the PyEEG function. Faster than PyEEG, but still critically slow.
@@ -240,21 +234,20 @@ def ap_entropy(a, m, R):
         return np.nan
 
     N = len(a)
-    Cm, in_range_i, in_range_j = _make_cm(a,m,R)
+    Cm, in_range_i, in_range_j = _make_cm(a, m, R)
 
     Cmp = _make_cmp(a, m, R, in_range_i, in_range_j)
 
-    Cm /= float((N - m +1 ))
+    Cm /= float((N - m + 1))
     Cmp /= float(N - m)
 
-    Phi_m, Phi_mp = np.sum(np.log(Cm)),  np.sum(np.log(Cmp))
+    Phi_m, Phi_mp = np.sum(np.log(Cm)), np.sum(np.log(Cmp))
     Ap_En = (Phi_m - Phi_mp) / (N - m)
 
     return Ap_En
 
 
 def samp_entropy(a, m, r, tau=1, relative_r=True):
-
     """
     Compute the sample entropy [RIC00]_ of a signal with embedding dimension `de` and delay `tau` [PYEEG]_.
     Vectorised version of the eponymous PyEEG function.
@@ -303,10 +296,10 @@ def samp_entropy(a, m, r, tau=1, relative_r=True):
         dist_b_view = dist_buffer[i:]
         sub_b_view = subtract_buffer[i:]
         range_b_view = in_range_buffer[i:]
-        embsp_view = embsp_last[i+1:]
+        embsp_view = embsp_last[i + 1 :]
 
         # substract the template from each subsequent row of the embedded matrix
-        np.subtract(embs_mini[i+1:],  template, out=sub_b_view)
+        np.subtract(embs_mini[i + 1 :], template, out=sub_b_view)
         # Absolute distance
         np.abs(sub_b_view, out=sub_b_view)
         # Maximal absolute difference between a scroll and a template is the distance
@@ -329,14 +322,13 @@ def samp_entropy(a, m, r, tau=1, relative_r=True):
         np.less_equal(dist_b_view, r, out=range_b_view)
         sum_cmp += np.sum(range_b_view)
 
-    if sum_cm == 0 or sum_cmp ==0:
+    if sum_cm == 0 or sum_cmp == 0:
         return np.NaN
 
-    return np.log(sum_cm/sum_cmp)
+    return np.log(sum_cm / sum_cmp)
 
 
 def spectral_entropy(a, sampling_freq, bands=None):
-
     """
     Compute spectral entropy of a  signal with respect to frequency bands.
     The power spectrum is computed through fft. Then, it is normalised and assimilated to a
@@ -356,29 +348,31 @@ def spectral_entropy(a, sampling_freq, bands=None):
     :return: the spectral entropy; a scalar
     """
 
-    psd = np.abs(np.fft.rfft(a))**2
+    psd = np.abs(np.fft.rfft(a)) ** 2
     psd /= np.sum(psd)  # psd as a pdf (normalised to one)
 
     if bands is None:
         power_per_band = psd[psd > 0]
     else:
-        freqs = np.fft.rfftfreq(a.size, 1/float(sampling_freq))
+        freqs = np.fft.rfftfreq(a.size, 1 / float(sampling_freq))
         bands = np.asarray(bands)
 
         freq_limits_low = np.concatenate([[0.0], bands])
         freq_limits_up = np.concatenate([bands, [np.inf]])
 
-        power_per_band = np.asarray([
-            np.sum(psd[np.bitwise_and(freqs >= low, freqs < up)]) for low, up in zip(freq_limits_low, freq_limits_up)
-        ])
+        power_per_band = np.asarray(
+            [
+                np.sum(psd[np.bitwise_and(freqs >= low, freqs < up)])
+                for low, up in zip(freq_limits_low, freq_limits_up)
+            ]
+        )
 
         power_per_band = power_per_band[power_per_band > 0]
 
-    return - np.sum(power_per_band * np.log2(power_per_band))
+    return -np.sum(power_per_band * np.log2(power_per_band))
 
 
 def hfd(a, k_max):
-
     """
     Compute Higuchi Fractal Dimension of a time series.
     Vectorised version of the eponymous [PYEEG]_ function.
@@ -411,26 +405,25 @@ def hfd(a, k_max):
     # km_idxs[:,1] -= 1
     #
 
-    for k in range(1,k_max):
+    for k in range(1, k_max):
         Lk = 0
-        for m in range(0,k):
+        for m in range(0, k):
             # we pregenerate all idxs
-            idxs = np.arange(1,int(np.floor((N-m)/k)),dtype=np.int32)
+            idxs = np.arange(1, int(np.floor((N - m) / k)), dtype=np.int32)
 
-            Lmk = np.sum(np.abs(a[m+idxs*k] - a[m+k*(idxs-1)]))
-            Lmk = (Lmk*(N - 1)/(((N - m)/ k)* k)) / k
+            Lmk = np.sum(np.abs(a[m + idxs * k] - a[m + k * (idxs - 1)]))
+            Lmk = (Lmk * (N - 1) / (((N - m) / k) * k)) / k
             Lk += Lmk
 
-        L.append(np.log(Lk/(m+1)))
-        x.append([np.log(1.0/ k), 1])
+        L.append(np.log(Lk / (m + 1)))
+        x.append([np.log(1.0 / k), 1])
 
-    (p, r1, r2, s)=np.linalg.lstsq(x, L)
+    p, r1, r2, s = np.linalg.lstsq(x, L)
 
     return p[0]
 
 
 def dfa(X, Ave=None, L=None, sampling=1):
-
     """
     WIP on this function. It is basically copied and pasted from [PYEEG]_, without verification of the maths or unittests.
     """
@@ -441,32 +434,31 @@ def dfa(X, Ave=None, L=None, sampling=1):
     Y = np.cumsum(X)
     Y -= Ave
     if not L:
-        max_power = np.int(np.log2(len(X)))-4
-        L = X.size / 2 ** np.arange(4,max_power)
-    if len(L)<2:
+        max_power = np.int(np.log2(len(X))) - 4
+        L = X.size / 2 ** np.arange(4, max_power)
+    if len(L) < 2:
         raise Exception("Too few values for L. Time series too short?")
-    F = np.zeros(len(L)) # F(n) of different given box length n
+    F = np.zeros(len(L))  # F(n) of different given box length n
 
-    for i,n in enumerate(L):
+    for i, n in enumerate(L):
         sampled = 0
-        for j in range(0,len(X) -n ,n):
+        for j in range(0, len(X) - n, n):
 
             if np.random.rand() < sampling:
-                F[i] += np.polyfit(np.arange(j,j+n), Y[j:j+n],1, full=True)[1]
+                F[i] += np.polyfit(np.arange(j, j + n), Y[j : j + n], 1, full=True)[1]
                 sampled += 1
         if sampled > 0:
             F[i] /= float(sampled)
 
-    LF = np.array([(l,f) for l,f in zip(L,F) if l>0]).T
+    LF = np.array([(l, f) for l, f in zip(L, F) if l > 0]).T
 
     F = np.sqrt(LF[1])
-    Alpha = np.polyfit(np.log(LF[0]), np.log(F),1)[0]
+    Alpha = np.polyfit(np.log(LF[0]), np.log(F), 1)[0]
 
     return Alpha
 
 
 def hurst(signal):
-
     """
     **Experimental**/untested implementation taken from:
     http://drtomstarke.com/index.php/calculation-of-the-hurst-exponent-to-test-for-trend-and-mean-reversion/
