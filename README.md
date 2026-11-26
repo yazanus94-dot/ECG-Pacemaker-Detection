@@ -1,9 +1,9 @@
 # ECG Pacemaker Detection — Deep Learning Pipeline
 
-[![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://python.org)
+[![Python](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](https://python.org)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.1%2B-red.svg)](https://pytorch.org)
 [![License](https://img.shields.io/badge/License-BSD%202--Clause-green.svg)](LICENSE)
-[![Docker](https://img.shields.io/badge/Docker-CUDA%2012.1-blue.svg)](Dockerfile)
+[![Docker](https://img.shields.io/badge/Docker-CPU--only-blue.svg)](Dockerfile)
 
 > **Portfolio Adaptation** — This repository is a modernized, sanitized reimplementation of a research collaboration between the **AI Center for Cardiology at Sheba Medical Center** and **Philips Research North America**. All real patient data has been removed; a synthetic data generator is provided for demonstration.
 
@@ -85,8 +85,8 @@ Generates WFDB-format records (`.hea` + `.dat`) with realistic:
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Python 3.10+
-- CUDA 11.8+ (for GPU training) or CPU-only
+- Python 3.11+
+- CPU-only works; a CUDA 11.8+ GPU is optional for faster training
 - 8GB+ RAM
 
 ### Installation
@@ -108,15 +108,20 @@ python src/generate_synthetic_data.py ./demo_data 30
 
 ### Docker (Recommended)
 ```bash
-# Build
+# Build (CPU-only image: pinned CPU PyTorch wheels, Python 3.11)
 docker build -t ecg-pacemaker .
 
-# Run with GPU
-docker run --gpus all -it ecg-pacemaker
+# Verify the model imports and report the PyTorch build
+docker run --rm ecg-pacemaker
 
-# Verify environment
-docker run --gpus all ecg-pacemaker
+# Run the test suite inside the image
+docker run --rm -v "$PWD/tests:/app/tests" ecg-pacemaker \
+  sh -c "pip install -q pytest && python -m pytest tests/ -q"
 ```
+
+> The image is CPU-only on purpose: the previous CUDA/devel base image was
+> multi-gigabyte and made CI builds slow and unreliable. Train on a GPU by
+> installing CUDA PyTorch wheels in your own environment.
 
 ---
 
@@ -195,7 +200,7 @@ ECG-Pacemaker-Detection/
 │   └── feats/                      # Feature engineering modules
 ├── demo_data/                      # Generated synthetic data (gitignored)
 ├── requirements.txt                # Modern dependencies
-├── Dockerfile                      # CUDA 12.1 + Python 3.10
+├── Dockerfile                      # CPU-only image (Python 3.11)
 ├── LICENSE                         # BSD-2-Clause + attribution
 └── README.md
 ```
@@ -264,8 +269,8 @@ This repository was adapted for portfolio demonstration by **Yazan Al-Jabari** (
 **Changes from Original:**
 - ✅ Removed all patient data (CSV, feature zips, demographics)
 - ✅ Added synthetic ECG data generator
-- ✅ Modernized dependencies (PyTorch 2.1+, NumPy 1.24+, Python 3.10+)
-- ✅ Updated Dockerfile (CUDA 12.1, Ubuntu 22.04)
+- ✅ Modernized dependencies (PyTorch 2.1+, NumPy 1.24+, Python 3.11+)
+- ✅ Reproducible CPU-only Docker image (Python 3.11, pinned CPU PyTorch wheels)
 - ✅ Added comprehensive documentation
 - ✅ Preserved all original attribution and licensing
 

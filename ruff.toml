@@ -1,0 +1,14 @@
+# Ruff configuration.
+#
+# The ECG feature-extraction modules are adapted from a research codebase that
+# relies on `from module import *` to assemble feature sets. Those wildcard
+# imports are intentional, so the default rule set (which flags F403/F405) is
+# replaced with the correctness-focused subset below: syntax errors, undefined
+# names, import and statement errors. Import ordering and formatting are handled
+# by Black.
+
+target-version = "py310"
+line-length = 100
+
+[lint]
+select = ["E9", "E722", "F63", "F7", "F82"]

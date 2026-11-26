@@ -19,7 +19,6 @@ from feats.utils.pyrem_univariate import *
 
 
 class FullWaveformStatistics:
-
     """
     Generate a dictionary of full waveform statistics for one ECG signal.
 
@@ -50,8 +49,18 @@ class FullWaveformStatistics:
         Full waveform statistics.
     """
 
-    def __init__(self, ts, signal_raw, signal_filtered, rpeaks,
-                 templates_ts, templates, fs, template_before, template_after):
+    def __init__(
+        self,
+        ts,
+        signal_raw,
+        signal_filtered,
+        rpeaks,
+        templates_ts,
+        templates,
+        fs,
+        template_before,
+        template_after,
+    ):
 
         # Input variables
         self.ts = ts
@@ -72,30 +81,36 @@ class FullWaveformStatistics:
     """
     Compile Features
     """
+
     def get_full_waveform_statistics(self):
         return self.full_waveform_statistics
 
     def calculate_full_waveform_statistics(self):
         self.full_waveform_statistics.update(self.calculate_basic_statistics())
-        self.full_waveform_statistics.update(self.calculate_stationary_wavelet_transform_statistics())
+        self.full_waveform_statistics.update(
+            self.calculate_stationary_wavelet_transform_statistics()
+        )
 
     """
     Feature Methods
     """
+
     def calculate_basic_statistics(self):
 
         # Empty dictionary
         basic_features = dict()
 
         # Calculate statistics
-        basic_features['full_waveform_min'] = np.min(self.signal_filtered)
-        basic_features['full_waveform_max'] = np.max(self.signal_filtered)
-        basic_features['full_waveform_mean'] = np.mean(self.signal_filtered)
-        basic_features['full_waveform_median'] = np.median(self.signal_filtered)
-        basic_features['full_waveform_std'] = np.std(self.signal_filtered)
-        basic_features['full_waveform_skew'] = sp.stats.skew(self.signal_filtered)
-        basic_features['full_waveform_kurtosis'] = sp.stats.kurtosis(self.signal_filtered)
-        basic_features['full_waveform_duration'] = np.max(self.ts)
+        basic_features["full_waveform_min"] = np.min(self.signal_filtered)
+        basic_features["full_waveform_max"] = np.max(self.signal_filtered)
+        basic_features["full_waveform_mean"] = np.mean(self.signal_filtered)
+        basic_features["full_waveform_median"] = np.median(self.signal_filtered)
+        basic_features["full_waveform_std"] = np.std(self.signal_filtered)
+        basic_features["full_waveform_skew"] = sp.stats.skew(self.signal_filtered)
+        basic_features["full_waveform_kurtosis"] = sp.stats.kurtosis(
+            self.signal_filtered
+        )
+        basic_features["full_waveform_duration"] = np.max(self.ts)
 
         return basic_features
 
@@ -145,7 +160,9 @@ class FullWaveformStatistics:
         pad_after = pad_count - pad_before
 
         # Add padding to waveform
-        waveform_padded = np.append(np.zeros(pad_before), np.append(waveform, np.zeros(pad_after)))
+        waveform_padded = np.append(
+            np.zeros(pad_before), np.append(waveform, np.zeros(pad_after))
+        )
 
         return waveform_padded, pad_before, pad_after
 
@@ -155,10 +172,14 @@ class FullWaveformStatistics:
         waveform_length = len(waveform)
 
         # Calculate minimum waveform length for SWT of certain decomposition level
-        waveform_length_updated = self.calculate_decomposition_level(waveform_length, level)
+        waveform_length_updated = self.calculate_decomposition_level(
+            waveform_length, level
+        )
 
         # Add necessary padding to waveform
-        waveform_padded, pad_before, pad_after = self.add_padding(waveform, waveform_length_updated)
+        waveform_padded, pad_before, pad_after = self.add_padding(
+            waveform, waveform_length_updated
+        )
 
         # Compute stationary wavelet transform
         swt = pywt.swtn(waveform_padded, wavelet=wavelet, level=level, start_level=0)
@@ -167,10 +188,10 @@ class FullWaveformStatistics:
         for lev in range(len(swt)):
 
             # Approximation
-            swt[lev]['a'] = swt[lev]['a'][pad_before:len(waveform_padded)-pad_after]
+            swt[lev]["a"] = swt[lev]["a"][pad_before : len(waveform_padded) - pad_after]
 
             # Detail
-            swt[lev]['d'] = swt[lev]['d'][pad_before:len(waveform_padded)-pad_after]
+            swt[lev]["d"] = swt[lev]["d"][pad_before : len(waveform_padded) - pad_after]
 
         return swt
 
@@ -183,7 +204,9 @@ class FullWaveformStatistics:
         decomp_level = 4
 
         # Stationary wavelet transform
-        swt = self.stationary_wavelet_transform(self.signal_filtered, wavelet='db4', level=decomp_level)
+        swt = self.stationary_wavelet_transform(
+            self.signal_filtered, wavelet="db4", level=decomp_level
+        )
 
         # Set frequency band
         freq_band_low = (3, 10)
@@ -199,12 +222,18 @@ class FullWaveformStatistics:
             Detail
             """
             # Compute Welch periodogram
-            fxx, pxx = signal.welch(x=swt[level]['d'], fs=self.fs)
+            fxx, pxx = signal.welch(x=swt[level]["d"], fs=self.fs)
 
             # Get frequency band
-            freq_band_low_index = np.logical_and(fxx >= freq_band_low[0], fxx < freq_band_low[1])
-            freq_band_med_index = np.logical_and(fxx >= freq_band_med[0], fxx < freq_band_med[1])
-            freq_band_high_index = np.logical_and(fxx >= freq_band_high[0], fxx < freq_band_high[1])
+            freq_band_low_index = np.logical_and(
+                fxx >= freq_band_low[0], fxx < freq_band_low[1]
+            )
+            freq_band_med_index = np.logical_and(
+                fxx >= freq_band_med[0], fxx < freq_band_med[1]
+            )
+            freq_band_high_index = np.logical_and(
+                fxx >= freq_band_high[0], fxx < freq_band_high[1]
+            )
 
             # Calculate maximum power
             max_power_low = np.max(pxx[freq_band_low_index])
@@ -212,28 +241,43 @@ class FullWaveformStatistics:
             max_power_high = np.max(pxx[freq_band_high_index])
 
             # Calculate average power
-            mean_power_low = np.trapz(y=pxx[freq_band_low_index], x=fxx[freq_band_low_index])
-            mean_power_med = np.trapz(y=pxx[freq_band_med_index], x=fxx[freq_band_med_index])
-            mean_power_high = np.trapz(y=pxx[freq_band_high_index], x=fxx[freq_band_high_index])
+            mean_power_low = np.trapz(
+                y=pxx[freq_band_low_index], x=fxx[freq_band_low_index]
+            )
+            mean_power_med = np.trapz(
+                y=pxx[freq_band_med_index], x=fxx[freq_band_med_index]
+            )
+            mean_power_high = np.trapz(
+                y=pxx[freq_band_high_index], x=fxx[freq_band_high_index]
+            )
 
             # Calculate max/mean power ratio
-            stationary_wavelet_transform_features['swt_d_' + str(level+1) + '_low_power_ratio'] = \
-                max_power_low / mean_power_low
-            stationary_wavelet_transform_features['swt_d_' + str(level+1) + '_med_power_ratio'] = \
-                max_power_med / mean_power_med
-            stationary_wavelet_transform_features['swt_d_' + str(level+1) + '_high_power_ratio'] = \
-                max_power_high / mean_power_high
+            stationary_wavelet_transform_features[
+                "swt_d_" + str(level + 1) + "_low_power_ratio"
+            ] = (max_power_low / mean_power_low)
+            stationary_wavelet_transform_features[
+                "swt_d_" + str(level + 1) + "_med_power_ratio"
+            ] = (max_power_med / mean_power_med)
+            stationary_wavelet_transform_features[
+                "swt_d_" + str(level + 1) + "_high_power_ratio"
+            ] = (max_power_high / mean_power_high)
 
             """
             Approximation
             """
             # Compute Welch periodogram
-            fxx, pxx = signal.welch(x=swt[level]['a'], fs=self.fs)
+            fxx, pxx = signal.welch(x=swt[level]["a"], fs=self.fs)
 
             # Get frequency band
-            freq_band_low_index = np.logical_and(fxx >= freq_band_low[0], fxx < freq_band_low[1])
-            freq_band_med_index = np.logical_and(fxx >= freq_band_med[0], fxx < freq_band_med[1])
-            freq_band_high_index = np.logical_and(fxx >= freq_band_high[0], fxx < freq_band_high[1])
+            freq_band_low_index = np.logical_and(
+                fxx >= freq_band_low[0], fxx < freq_band_low[1]
+            )
+            freq_band_med_index = np.logical_and(
+                fxx >= freq_band_med[0], fxx < freq_band_med[1]
+            )
+            freq_band_high_index = np.logical_and(
+                fxx >= freq_band_high[0], fxx < freq_band_high[1]
+            )
 
             # Calculate maximum power
             max_power_low = np.max(pxx[freq_band_low_index])
@@ -241,17 +285,26 @@ class FullWaveformStatistics:
             max_power_high = np.max(pxx[freq_band_high_index])
 
             # Calculate average power
-            mean_power_low = np.trapz(y=pxx[freq_band_low_index], x=fxx[freq_band_low_index])
-            mean_power_med = np.trapz(y=pxx[freq_band_med_index], x=fxx[freq_band_med_index])
-            mean_power_high = np.trapz(y=pxx[freq_band_high_index], x=fxx[freq_band_high_index])
+            mean_power_low = np.trapz(
+                y=pxx[freq_band_low_index], x=fxx[freq_band_low_index]
+            )
+            mean_power_med = np.trapz(
+                y=pxx[freq_band_med_index], x=fxx[freq_band_med_index]
+            )
+            mean_power_high = np.trapz(
+                y=pxx[freq_band_high_index], x=fxx[freq_band_high_index]
+            )
 
             # Calculate max/mean power ratio
-            stationary_wavelet_transform_features['swt_a_' + str(level+1) + '_low_power_ratio'] = \
-                max_power_low / mean_power_low
-            stationary_wavelet_transform_features['swt_a_' + str(level+1) + '_med_power_ratio'] = \
-                max_power_med / mean_power_med
-            stationary_wavelet_transform_features['swt_a_' + str(level+1) + '_high_power_ratio'] = \
-                max_power_high / mean_power_high
+            stationary_wavelet_transform_features[
+                "swt_a_" + str(level + 1) + "_low_power_ratio"
+            ] = (max_power_low / mean_power_low)
+            stationary_wavelet_transform_features[
+                "swt_a_" + str(level + 1) + "_med_power_ratio"
+            ] = (max_power_med / mean_power_med)
+            stationary_wavelet_transform_features[
+                "swt_a_" + str(level + 1) + "_high_power_ratio"
+            ] = (max_power_high / mean_power_high)
 
         """
         Non-Linear
@@ -262,22 +315,26 @@ class FullWaveformStatistics:
             Detail
             """
             # Log-energy entropy
-            stationary_wavelet_transform_features['swt_d_' + str(level+1) + '_energy_entropy'] = \
-                np.sum(np.log10(np.power(swt[level]['d'], 2)))
+            stationary_wavelet_transform_features[
+                "swt_d_" + str(level + 1) + "_energy_entropy"
+            ] = np.sum(np.log10(np.power(swt[level]["d"], 2)))
 
             # Higuchi_fractal
-            stationary_wavelet_transform_features['swt_d_' + str(level+1) + '_higuchi_fractal'] = \
-                hfd(swt[level]['d'], k_max=10)
+            stationary_wavelet_transform_features[
+                "swt_d_" + str(level + 1) + "_higuchi_fractal"
+            ] = hfd(swt[level]["d"], k_max=10)
 
             """
             Approximation
             """
             # Log-energy entropy
-            stationary_wavelet_transform_features['swt_a_' + str(level+1) + '_energy_entropy'] = \
-                np.sum(np.log10(np.power(swt[level]['a'], 2)))
+            stationary_wavelet_transform_features[
+                "swt_a_" + str(level + 1) + "_energy_entropy"
+            ] = np.sum(np.log10(np.power(swt[level]["a"], 2)))
 
             # Higuchi_fractal
-            stationary_wavelet_transform_features['swt_a_' + str(level+1) + '_higuchi_fractal'] = \
-                hfd(swt[level]['a'], k_max=10)
+            stationary_wavelet_transform_features[
+                "swt_a_" + str(level + 1) + "_higuchi_fractal"
+            ] = hfd(swt[level]["a"], k_max=10)
 
         return stationary_wavelet_transform_features
